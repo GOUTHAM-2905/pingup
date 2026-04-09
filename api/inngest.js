@@ -1,7 +1,19 @@
-import { serve } from "inngest/vercel";
-import { inngest, functions } from "../server/Inngest/index.js";
+import express from "express";
+import { serve } from "inngest/express";
+import { inngest } from "../server/inngest/index.js";
+import { functions } from "../server/inngest/index.js";
 
-export const { GET, POST, PUT } = serve({
-  client: inngest,
-  functions,
-});
+const app = express();
+
+app.use(express.json());
+
+// ✅ IMPORTANT: use "/api/inngest"
+app.use(
+  "/api/inngest",
+  serve({
+    client: inngest,
+    functions,
+  })
+);
+
+export default app;
