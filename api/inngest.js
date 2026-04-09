@@ -7,9 +7,8 @@ const app = express();
 
 app.use(express.json());
 
-// ✅ IMPORTANT: use "/api/inngest"
-app.use(
-  "/api/inngest",
+app.all(
+  "/",
   serve({
     client: inngest,
     functions,
