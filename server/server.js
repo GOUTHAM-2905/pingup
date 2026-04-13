@@ -3,7 +3,8 @@ import cors from "cors";
 import 'dotenv/config';
 import mongoose from "mongoose";
 import connectDB from "./configs/db.js";
- 
+import { serve } from "inngest/express";
+import { inngest } from "../server/api/inngest.js";
 
 const app = express();
 app.use(cors());
@@ -13,6 +14,11 @@ await connectDB();
 
 app.get('/', (req, res) => {
   res.send("Server is running")
+});
+
+const handler = serve({
+  client: inngest,
+  functions,
 });
 
 
