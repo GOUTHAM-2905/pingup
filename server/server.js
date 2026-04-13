@@ -1,26 +1,33 @@
 import express from "express";
 import cors from "cors";
-import 'dotenv/config';
-import mongoose from "mongoose";
+import "dotenv/config";
 import connectDB from "./configs/db.js";
 import { serve } from "inngest/express";
-import { inngest } from "../server/api/inngest.js";
+
+// ✅ Correct import (based on your folder)
+import { inngest, functions } from "./Inngest/index.js";
 
 const app = express();
+
 app.use(cors());
 app.use(express.json());
+
+// DB connect
 await connectDB();
 
-
-app.get('/', (req, res) => {
-  res.send("Server is running")
+// Test route
+app.get("/", (req, res) => {
+  res.send("Server is running");
 });
 
-const handler = serve({
-  client: inngest,
-  functions,
-});
-
+// ✅ Inngest route
+app.use(
+  "/api/inngest",
+  serve({
+    client: inngest,
+    functions,
+  })
+);
 
 const PORT = process.env.PORT || 4000;
 
