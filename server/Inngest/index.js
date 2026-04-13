@@ -1,7 +1,6 @@
 import { Inngest } from "inngest";
 import User from "../models/User.js";
 
-// Create a client to send and receive events
 export const inngest = new Inngest({ id: "pingup-app" });
 
 const syncUserCreation = inngest.createFunction(
@@ -13,7 +12,6 @@ const syncUserCreation = inngest.createFunction(
     const { id, first_name, last_name, email_addresses, image_url } = event.data;
 
     let username = email_addresses[0].email_address.split("@")[0];
-
     let user = await User.findOne({ username });
 
     while (user) {
@@ -32,9 +30,6 @@ const syncUserCreation = inngest.createFunction(
     await User.create(userdata);
   }
 );
-// inggeest funtion to update user
-
-
 
 const syncUserUpdation = inngest.createFunction(
   {
@@ -54,9 +49,6 @@ const syncUserUpdation = inngest.createFunction(
   }
 );
 
-// inggest function to delete user from database 
-
-
 const syncUserDeletion = inngest.createFunction(
   {
     id: "delete-user-from-clerk",
@@ -64,11 +56,8 @@ const syncUserDeletion = inngest.createFunction(
   },
   async ({ event }) => {
     const { id } = event.data;
-
     await User.findByIdAndDelete(id);
   }
 );
 
-
-// Create an empty array where we'll export future Inngest functions
-export const functions = [syncUserCreation,syncUserUpdation,syncUserDeletion ];
+export const functions = [syncUserCreation, syncUserUpdation, syncUserDeletion];

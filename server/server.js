@@ -3,25 +3,19 @@ import cors from "cors";
 import "dotenv/config";
 import connectDB from "./configs/db.js";
 import { serve } from "inngest/express";
-
-// ✅ Correct import (based on your folder)
 import { inngest, functions } from "./Inngest/index.js";
-
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 
-// DB connect
-await connectDB();
+connectDB();
 
-// Test route
 app.get("/", (req, res) => {
   res.send("Server is running");
 });
 
-// ✅ Inngest route
 app.use(
   "/api/inngest",
   serve({
@@ -30,8 +24,9 @@ app.use(
   })
 );
 
-const PORT = process.env.PORT || 4000;
+if (process.env.NODE_ENV !== "production") {
+  const PORT = process.env.PORT || 4000;
+  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+}
 
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+export default app;
