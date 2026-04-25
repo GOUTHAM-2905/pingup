@@ -4,13 +4,15 @@ import "dotenv/config";
 import connectDB from "./configs/db.js";
 import { serve } from "inngest/express";
 import { inngest, functions } from "./Inngest/index.js";
+import { clerkMiddleware } from '@clerk/express'
+import userRouter from "./routes/userRoutes.js";
 
 const app = express();
 
-app.use(cors());
+await connectDB();
 app.use(express.json());
-
-connectDB();
+app.use(cors());
+app.use(clerkMiddleware());
 
 app.get("/", (req, res) => {
   res.send("Server is running");
@@ -23,6 +25,7 @@ app.use(
     functions,
   })
 );
+app.use("/api/user",userRouter);
 
 if (process.env.NODE_ENV !== "production") {
   const PORT = process.env.PORT || 4000;
