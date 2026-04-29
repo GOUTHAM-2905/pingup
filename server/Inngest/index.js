@@ -166,3 +166,10 @@ export const functions = [
   syncUserDeletion,
   sendNewConnectionRequestReminder
 ];
+
+// 👇 ADD HERE
+console.log("Functions count:", functions.length);
+console.log(functions.map(f => f?.id));
+
+// 👇 then export
+
