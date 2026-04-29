@@ -182,7 +182,11 @@ export const sendConnectionRequest = async (req, res) => {
             ]
         });
         if (!connection) {
-            await Connection.create({ from_user_id: userId, to_user_id: id });
+            const newConnection = await Connection.create({ from_user_id: userId, to_user_id: id });
+            await inngest.send({
+                name: "app/connection-request",
+                data: { connectionId: newConnection._id }
+            });
             return res.json({ success: true, message: "Connection request sent successfully" });
         }else if(connection && connection.status === "accepted"){
             return res.json({ success: false, message: "You are already connected with the user" });
@@ -241,3 +245,17 @@ export const acceptUserConnections = async (req, res) => {
         res.json({ success: false, message: error.message });
     }
 };
+
+export const getuserProfiles = async (req, res) => {
+    try {
+        const {profileId} = req.both();
+        const profile = await User.findById(profileId)
+        if(!profile){
+            return res.json({ success: false, message: "No user found" });
+        }
+        const posts = await Post.find({user:profileId}).populate("user")
+        res.json({ success: true, profile, posts }); 
+    } catch (error) {
+        res.json({ success: false, message: error.message });
+    }
+}

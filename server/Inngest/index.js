@@ -2,6 +2,7 @@ import { Inngest } from "inngest";
 import User from "../models/User.js";
 import sendEmail from "../configs/nodeMailer.js";
 import Connection from "../models/Connections.js";
+import Story from "../models/Story.js";
 
 export const inngest = new Inngest({ id: "pingup-app" });
 
@@ -159,17 +160,36 @@ const sendNewConnectionRequestReminder = inngest.createFunction(
   }
 );
 
+const deleteStory = inngest.createFunction(
+    { id: "delete-story" },
+    { event: "app/story.delete" },
+    async ({ event, step }) => {
+        const { storyId } = event.data;
+
+        // schedule deletion exactly 24 hours later
+        const deleteAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+        await step.sleepUntil("wait-for-24-hours", deleteAt);
+
+        return await step.run("story-delete", async () => {
+            const deleted = await Story.findByIdAndDelete(storyId);
+            if (!deleted) {
+                return { message: "Story already deleted or not found" };
+            }
+            return { message: "Story deleted successfully" };
+        });
+    }
+);
 // ✅ export
 export const functions = [
   syncUserCreation,
   syncUserUpdation,
   syncUserDeletion,
-  sendNewConnectionRequestReminder
+  sendNewConnectionRequestReminder,
+  deleteStory
 ];
 
-// 👇 ADD HERE
-console.log("Functions count:", functions.length);
-console.log(functions.map(f => f?.id));
 
-// 👇 then export
+
+
 

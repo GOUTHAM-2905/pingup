@@ -6,6 +6,8 @@ import { serve } from "inngest/express";
 import { inngest, functions } from "./Inngest/index.js";
 import { clerkMiddleware } from '@clerk/express'
 import userRouter from "./routes/userRoutes.js";
+import postRouter from "./routes/postRoutes.js";
+import storyRouter from "./routes/storyRoutes.js";
 
 const app = express();
 
@@ -26,6 +28,8 @@ app.use(
   })
 );
 app.use("/api/user",userRouter);
+app.use("/api/post",postRouter);
+app.use("/api/story",storyRouter);
 
 if (process.env.NODE_ENV !== "production") {
   const PORT = process.env.PORT || 4000;
