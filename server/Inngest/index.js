@@ -63,26 +63,37 @@ const syncUserDeletion = inngest.createFunction(
 );
 
 // innjest function to send email that new connection request is sent 
-const sendNewConnectionRequestRemainder = inngest.createFunction(
-  {
-    id: "send-new-connection-request-remainder",
-    triggers: [{ event: "app/connection-request" }] // ✅ moved here
-  },
+const sendNewConnectionRequestReminder = inngest.createFunction(
+  { id: "send-new-connection-request-reminder" },
+  { event: "app/connection-request" },
   async ({ event, step }) => {
-    const connectionId = event.data;
+    const connectionId = event.data?.connectionId || event.data;
 
     await step.run("send-connection-request-mail", async () => {
       const connection = await Connection.findById(connectionId)
         .populate("from_user_id to_user_id");
 
+      if (!connection) throw new Error("Connection not found");
+
+      if (connection.status === "accepted") {
+        return { message: "Already connected" };
+      }
+
       const subject = "👋 New Connection Request";
 
-      const body = `<div style="font-family: Arial, Helvetica, sans-serif; padding: 20px">
+      const body = `
+      <div style="font-family: Arial; padding: 20px">
         <h2>Hi ${connection.to_user_id.full_name},</h2>
-        <p>You have a new connection request from ${connection.from_user_id.full_name} - @${connection.from_user_id.username}</p>
-        <p>Click <a href="${process.env.FRONTEND_URL}/connections">here</a> to accept or reject the request</p>
+        <p>
+          You have a new connection request from 
+          ${connection.from_user_id.full_name} - @${connection.from_user_id.username}
+        </p>
+        <p>
+          Click <a href="${process.env.FRONTEND_URL}/connections">here</a>
+          to accept or reject the request
+        </p>
         <br>
-        <p>Thanks,<br/>PingUp - Stay Connected</p>
+        <p>Thanks,<br/>PingUp</p>
       </div>`;
 
       await sendEmail({
@@ -95,9 +106,11 @@ const sendNewConnectionRequestRemainder = inngest.createFunction(
     const in24Hours = new Date(Date.now() + 24 * 60 * 60 * 1000);
     await step.sleepUntil("wait-for-24-hours", in24Hours);
 
-    await step.run("send-connection-remainder-email", async () => {
+    await step.run("send-connection-reminder-email", async () => {
       const connection = await Connection.findById(connectionId)
         .populate("from_user_id to_user_id");
+
+      if (!connection) throw new Error("Connection not found");
 
       if (connection.status === "accepted") {
         return { message: "Already connected" };
@@ -105,10 +118,17 @@ const sendNewConnectionRequestRemainder = inngest.createFunction(
 
       const subject = "👋 Reminder: Connection Request";
 
-      const body = `<div style="font-family: Arial, Helvetica, sans-serif; padding: 20px">
+      const body = `
+      <div style="font-family: Arial; padding: 20px">
         <h2>Hi ${connection.to_user_id.full_name},</h2>
-        <p>You still have a connection request from ${connection.from_user_id.full_name}</p>
-        <p>Click <a href="${process.env.FRONTEND_URL}/connections">here</a> to respond</p>
+        <p>
+          You still have a connection request from 
+          ${connection.from_user_id.full_name}
+        </p>
+        <p>
+          Click <a href="${process.env.FRONTEND_URL}/connections">here</a>
+          to respond
+        </p>
         <br>
         <p>Thanks,<br/>PingUp</p>
       </div>`;
@@ -123,4 +143,5 @@ const sendNewConnectionRequestRemainder = inngest.createFunction(
     return { message: "Reminder Sent." };
   }
 );
+
 export const functions = [syncUserCreation, syncUserUpdation, syncUserDeletion, sendNewConnectionRequestRemainder];
