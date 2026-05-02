@@ -2,6 +2,7 @@ import imagekit from "../configs/imagekit.js";
 import User from "../models/User.js";
 import Connection from "../models/Connections.js";
 import fs from "fs";
+import Post from "../models/Post.js";
 
 // get user data using userId 
 
@@ -248,7 +249,7 @@ export const acceptUserConnections = async (req, res) => {
 
 export const getuserProfiles = async (req, res) => {
     try {
-        const {profileId} = req.both();
+        const {profileId} = req.body;
         const profile = await User.findById(profileId)
         if(!profile){
             return res.json({ success: false, message: "No user found" });

@@ -8,20 +8,54 @@ import Postcard from "../components/Postcard";
 import { Link } from "lucide-react";
 import moment from "moment";
 import ProfileModel from "../components/ProfileModel";
+// import { useAuth } from "../context/AuthContext";
+// import api from "../../api/axios.jy
+import toast from "react-hot-toast";
+import api from "../api/axios.js";
+import { useAuth } from "@clerk/clerk-react";
+import { useSelector } from "react-redux";
+
 const Profile = () => {
+  const currentuser = useSelector((state) => state.user.value);
+  const {getToken} = useAuth()
   const { ProfileId } = useParams();
   const [user, setuser] = useState(null);
   const [posts, setposts] = useState([]);
   const [activeTab, setactiveTab] = useState([]);
   const [showEdit, setshowEdit] = useState(false);
 
-  const fetchUserData = async () => {
-    setuser(dummyUserData);
-    setposts(dummyPostsData);
-  };
-  useEffect(() => {
-    fetchUserData();
-  }, []);
+const fetchUserData = async (profileId) => {
+  const token = await getToken();
+
+  try {
+    const { data } = await api.post(
+      `/api/user/profile`,
+      { profileId },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (data.success) {
+      setuser(data.profile);
+      setposts(data.posts);
+    } else {
+      toast.error(data.message);
+      
+    }
+  } catch (error) {
+    toast.error(error.message);
+  }
+};
+useEffect(() => {
+  if (ProfileId) {
+    fetchUserData(ProfileId);
+  } else if (currentuser?._id) {
+    fetchUserData(currentuser._id);
+  }
+}, [ProfileId, currentuser]);
 
   return user ? (
     <div className="relative h-full overflow-y-scroll bg-gray-50 p-6">

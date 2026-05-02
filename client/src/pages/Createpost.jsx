@@ -1,16 +1,65 @@
 import React from "react";
-import { useState } from "react";
-import { dummyUserData } from "../assets/assets";
+import { useState} from "react";
 import { X,Image } from "lucide-react";
 import toast from "react-hot-toast";
+import { useDispatch, useSelector } from "react-redux";
+import { useAuth } from "@clerk/clerk-react";
+import { data, useNavigate } from "react-router-dom";
+import api from "../api/axios.js";
+   
 const Createpost = () => {
+  const navigate = useNavigate();
+  const {getToken} = useAuth();
   const [content, setcontent] = useState("");
   const [images, setimages] = useState([]);
   const [loading, setloading] = useState(false);
 
-  const user = dummyUserData;
-  const handlesubmit = async () => {
+  const user = useSelector((state) => state.user.value);
+const handlesubmit = async () => {
+  const token = await getToken();
+
+  if (!images.length && !content) {
+    return toast.error("please add at least one images or text");
   }
+
+  setloading(true);
+
+  // ✅ FIX: match backend enum values exactly
+  const postType =
+    images.length && content
+      ? "text_image"
+      : images.length
+      ? "image"
+      : "text";
+
+  try {
+    const formData = new FormData();
+    formData.append("content", content);
+
+    // ✅ FIX: correct key name (post_type)
+    formData.append("post_type", postType);
+
+    // ✅ better than map for side-effects
+    images.forEach((image) => formData.append("images", image));
+
+    const { data } = await api.post("/api/post/add", formData, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (data.success) {
+      navigate("/");
+    } else {
+      throw new Error(data.message);
+    }
+  } catch (error) {
+    console.log(error.message);
+    toast.error(error.message); // optional but better UX
+  }
+
+  setloading(false);
+};
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       <div className="max-w-6xl mx-auto p-6">
@@ -30,7 +79,7 @@ const Createpost = () => {
             />
             <div>
               <h2 className="font-semibold">{user.full_name}</h2>
-              <p className="text-gray-500" text-sm>
+              <p className="text-gray-500 text-sm"  >
                 @{user.username}
               </p>
             </div>
