@@ -43,9 +43,15 @@ export const getStories = async (req, res) => {
     try{
         const {userId} = req.auth();
         const user = await User.findById(userId);
+
         const userIds = [userId, ...user.following, ...user.connections];
-        const stries = await story.find({user:{$in:userIds}}).populate('user').sort({createdAt:-1});
-        res.json({ success: true, stries });
+
+        const stories = await Story.find({ user: { $in: userIds } })
+            .populate('user')
+            .sort({ createdAt: -1 });
+
+        res.json({ success: true, stories });
+
     }catch(error){
         res.json({ success: false, message: error.message });
     }

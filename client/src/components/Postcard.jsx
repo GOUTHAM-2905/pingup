@@ -4,6 +4,9 @@ import { BadgeCheck, Heart, MessageCircle, Share } from 'lucide-react'
 import moment from 'moment'
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
+import { useAuth } from '@clerk/clerk-react';
+import api from '../api/axios';
+import toast from 'react-hot-toast';
 
 const Postcard = ({ post }) => {
 
@@ -11,6 +14,7 @@ const Postcard = ({ post }) => {
     /#(\w+)/g,
     '<span class="text-indigo-600">#$1</span>'
   );
+  const {getToken} = useAuth();
 
   // ✅ FIX 1: use array instead of likes_count
   const [likes, setlikes] = useState(post.likes || []);
@@ -18,8 +22,30 @@ const Postcard = ({ post }) => {
   const navigate = useNavigate();
   const currentuser = useSelector((state) => state.user.value);
 
-  const handlelike = async () => {
+ const handlelike = async () => {
+  try {
+    const {data} = await api.post(
+      '/api/post/like',
+      {postId: post._id},
+      {headers: {Authorization: `Bearer ${await getToken()}`}}
+    );
+
+    if(data.success){
+      toast.success(data.message);
+      setlikes(prev =>{
+        if(prev.includes(currentuser._id)){
+          return prev.filter(id=>id !== currentuser._id)
+        }else{
+          return [...prev,currentuser._id]
+        }
+      })
+    }else{
+      toast.error(data.message);
+    }
+  } catch (error) {
+    toast.error(error.response?.data?.message || error.message);
   }
+}
 
   return (
     <div className='bg-white rounded-xl shadow p-4 space-y-4 w-full max-w-2xl'>

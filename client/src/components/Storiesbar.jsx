@@ -4,16 +4,33 @@ import Storyviewier from './Storyviewier'
 import { dummyStoriesData } from '../assets/assets'
 import { Plus } from 'lucide-react'
 import moment from 'moment'
-
+import { useAuth } from '@clerk/clerk-react'
+import api from '../api/axios.js'
+import toast from 'react-hot-toast'
 
 const Storiesbar = () => {
-
+  const { getToken } = useAuth();
   const [stories, setStories] = useState([])
   const [showmodal, setshowmodal] = useState(false)
   const [viewstory, setviewstory] = useState(null)
 
   const fetchstories = async () => {
-    setStories(dummyStoriesData)
+    try {
+      const token = await getToken();
+
+      const { data } = await api.get('/api/story/get', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+
+      if (data.success) {
+        setStories(data.stories)
+      } else {
+        toast(data.message);
+      }
+
+    } catch (error) {
+      toast.error(error.message)
+    }
   }
 
   useEffect(() => {
@@ -26,15 +43,14 @@ const Storiesbar = () => {
       <div className='flex gap-4 pb-5 overflow-x-auto no-scrollbar'>
 
         {/* Create Story Card */}
-        <div  onClick={() => {
-          console.log("clicked");
-          setshowmodal(true);
-        }}className='rounded-lg shadow-sm min-w-30 max-w-30 max-h-40 aspect-[3/4] cursor-pointer hover:shadow-lg transition-all duration-200 border-2 border-dashed border-indigo-300 bg-gradient-to-b from-indigo-50 to-white'>
-
+        <div
+          onClick={() => setshowmodal(true)}
+          className='rounded-lg shadow-sm min-w-30 max-w-30 max-h-40 aspect-[3/4] cursor-pointer hover:shadow-lg transition-all duration-200 border-2 border-dashed border-indigo-300 bg-gradient-to-b from-indigo-50 to-white'
+        >
           <div className='h-full flex flex-col items-center justify-center p-4'>
 
             <div className='size-10 bg-indigo-500 rounded-full flex items-center justify-center mb-3'>
-              <Plus className='w-5 h-5 text-white'/>
+              <Plus className='w-5 h-5 text-white' />
             </div>
 
             <p className='text-sm font-medium text-slate-700'>
@@ -42,13 +58,13 @@ const Storiesbar = () => {
             </p>
 
           </div>
-
         </div>
 
         {/* Story Cards */}
         {stories.map((story, index) => (
 
-          <div onClick={()=>setviewstory(story)}
+          <div
+            onClick={() => setviewstory(story)}
             key={index}
             className='relative rounded-lg shadow min-w-30 max-w-30 max-h-40 aspect-[3/4] cursor-pointer hover:shadow-lg transition-all duration-200 bg-gradient-to-b from-indigo-500 to-purple-600 hover:from-indigo-700 hover:to-purple-800 active:scale-95'
           >
@@ -66,25 +82,42 @@ const Storiesbar = () => {
             <p className='absolute bottom-1 right-2 text-white text-xs z-10'>
               {moment(story.createdAt).fromNow()}
             </p>
-            {
-              story.media_type!='text' && (
-                <div className='absolute inset-0 z-1 rounded-lg bg-black overflow-hidden'>
-                    {
-                      story.media_type=="image" ?
-                      <img src={story.media_url} className='h-full w-full object-cover hover:scale-110 transition duration-500 opacity-70 hover:opacity-80'/>:
-                      <video src={story.media_url} className='h-full w-full object-cover hover:scale-110 transition duration-500 opacity-70 hover:opacity-80' />
-                    } 
-                </div>
-              )
-            }
+
+            {story.media_type !== 'text' && (
+              <div className='absolute inset-0 z-1 rounded-lg bg-black overflow-hidden'>
+                {story.media_type === "image" ? (
+                  <img
+                    src={story.media_url}
+                    className='h-full w-full object-cover hover:scale-110 transition duration-500 opacity-70 hover:opacity-80'
+                  />
+                ) : (
+                  <video
+                    src={story.media_url}
+                    className='h-full w-full object-cover hover:scale-110 transition duration-500 opacity-70 hover:opacity-80'
+                  />
+                )}
+              </div>
+            )}
 
           </div>
 
         ))}
       </div>
 
-        {showmodal && <StoryModal setshowmodal={setshowmodal}/>}
-        {viewstory && <Storyviewier viewstory={viewstory} setviewstory={setviewstory}/>}
+      {/* ✅ FIX ADDED HERE */}
+      {showmodal && (
+        <StoryModal
+          setshowmodal={setshowmodal}
+          fetchstories={fetchstories}
+        />
+      )}
+
+      {viewstory && (
+        <Storyviewier
+          viewstory={viewstory}
+          setviewstory={setviewstory}
+        />
+      )}
 
     </div>
   )

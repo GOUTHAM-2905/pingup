@@ -3,6 +3,8 @@ import { addUserStory, getStories} from "../controllers/StoryController.js";
 import { protect } from "../middlewares/auth.js";
 import multer from "multer";
 import {upload} from "../configs/multer.js";
+import Story from "../models/Story.js";
+
 
 const storyRouter = express.Router();
 storyRouter.post("/create",upload.single("media"),protect,addUserStory);
